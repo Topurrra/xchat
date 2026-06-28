@@ -10,9 +10,6 @@
   <link rel="manifest" href="manifest.json" />
   <title></title>
   <style>
-    /* ============================================================
-       THEME TOKENS  — charcoal + cream + orange-red brand
-       ============================================================ */
     :root {
       --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --mono: "SF Mono", ui-monospace, "Cascadia Code", "Fira Code", Consolas, monospace;
@@ -527,7 +524,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <div class="side-head">
-        <span class="side-brand"><span class="logo" id="brandLogo"></span>OMNIS-X</span>
+        <span class="side-brand"><span class="logo" id="brandLogo"></span>X-Chat</span>
       </div>
       <button class="new-chat" id="btnNewChat">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -568,6 +565,9 @@
           </button>
           <button class="icon-btn" id="btnSettings" title="Settings (Ctrl/⌘+,)" aria-label="Settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </button>
+          <button class="icon-btn" id="btnLearn" title="Learn" aria-label="Learn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2M8 6h8"/></svg>
           </button>
         </div>
       </header>
@@ -784,10 +784,6 @@
 
   <script>
   "use strict";
-  /* ============================================================
-     X Chat — single-file local + cloud chat
-     Providers: on-device Gemini Nano (window.LanguageModel) + OpenRouter
-     ============================================================ */
 
   const LS = { convos: "xc.convos.v1", active: "xc.active.v1", settings: "xc.settings.v1", theme: "xc.theme.v1", models: "xc.models.v1", legacy: "gn.chat.v1" };
   // OpenAI-compatible cloud providers (all use Bearer key + /chat/completions + /models)
@@ -824,7 +820,7 @@
   const els = {};
   ["sidebar","navScrim","convoList","btnNewChat","btnNav","btnModel","headerLogo","brandLogo","mpName",
    "statusDot","statusText","scroller","thread","progressBox","btnExport","btnTheme","iconMoon","iconSun",
-   "btnKeys","btnSettings","btnMic","btnAttach","btnTools","toolsMenu","toolsMainView","toolsLangView","langList","fileInput","attachStrip","dropOverlay","input","btnSend","iconSend","iconStop","toaster",
+   "btnKeys","btnSettings","btnLearn","btnMic","btnAttach","btnTools","toolsMenu","toolsMainView","toolsLangView","langList","fileInput","attachStrip","dropOverlay","input","btnSend","iconSend","iconStop","toaster",
    "scrim","drawer","btnCloseDrawer","orKey","groqKey","cerebrasKey","mistralKey","showKeys","translateTo","temp","tempVal","topk","topkVal","sysPrompt",
    "btnReset","btnSaveSettings","modelModal","btnCloseModel","segLocal","segOllama","segOR","paneLocal","paneOllama","paneOR",
    "localOpt","cloudProvider","cloudNote","orSearch","orFree","orFreeWrap","orRefresh","orList","olSearch","olRefresh","olList","olUrlNote","ollamaUrl","keysModal","btnCloseKeys",
@@ -1341,7 +1337,7 @@
     text = (text != null ? text : els.input.value).trim();
     const atts = pendingAtts.slice();
     if (!text && !atts.length) return;
-    // warn about unsupported attachment/provider combos
+    // warn about unsupported combos
     if (atts.length) {
       if (settings.provider === "openrouter" && atts.some(a => a.type === "audio")) toast("Audio isn't supported on OpenRouter — it will be skipped", false);
       if (settings.provider === "ollama" && atts.some(a => a.type === "audio")) toast("Audio isn't supported by Ollama — it will be skipped", false);
@@ -1980,6 +1976,9 @@
   els.btnTheme.addEventListener("click", toggleTheme);
   els.btnKeys.addEventListener("click", openKeys);
   els.btnSettings.addEventListener("click", openDrawer);
+  els.btnLearn.addEventListener("click", () => {
+    window.open("https://themissingmanual.dev", "_blank", "noopener,noreferrer");
+});
   els.btnCloseDrawer.addEventListener("click", closeDrawer);
   els.btnCloseKeys.addEventListener("click", closeKeys);
   els.scrim.addEventListener("click", closeDrawer);

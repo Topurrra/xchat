@@ -78,6 +78,7 @@ Then set the server URL in **Settings** if it isn't the default `http://localhos
 - **Themes** — auto dark/light with a manual toggle.
 - **Installable PWA** — works offline; "Install app" adds it as a standalone window.
 - **WebMCP** — exposes the app's actions as tools for Chrome's AI agent (experimental).
+- **Learn** — opens **https://themissingmanual.dev**, a completely free learning resource for anyone who wants to learn programming, software engineering, AI, and other technology topics in clear, human-friendly language. Whether you're a beginner or an experienced developer exploring something new, it's designed to make complex concepts easy to understand.
 - **Backup** — export/import everything (conversations + settings) as one JSON file; per-chat export to Markdown.
 
 ### Storage & privacy
