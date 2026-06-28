@@ -289,7 +289,6 @@
     .tools-menu .hide { display: none; }
     .tools-menu .item.back { color: var(--text-dim); font-weight: 600; }
     #langList { max-height: 240px; overflow-y: auto; }
-    .mic.active { background: rgba(240,72,30,.15); color: var(--accent); }
 
     /* inline message translation */
     .msg-translation { margin-top: 8px; padding: 9px 13px; border-radius: 10px; background: var(--bubble-ai); border: 1px solid var(--border); border-left: 3px solid var(--accent); font-size: 14px; }
@@ -785,7 +784,7 @@
   <script>
   "use strict";
 
-  const LS = { convos: "xc.convos.v1", active: "xc.active.v1", settings: "xc.settings.v1", theme: "xc.theme.v1", models: "xc.models.v1", legacy: "gn.chat.v1" };
+  const LS = { convos: "xc.convos.v1", active: "xc.active.v1", settings: "xc.settings.v1", theme: "xc.theme.v1", legacy: "gn.chat.v1" };
   // OpenAI-compatible cloud providers (all use Bearer key + /chat/completions + /models)
   const CLOUD = {
     openrouter: { name: "OpenRouter", base: "https://openrouter.ai/api/v1", keyField: "openrouterKey", keysUrl: "https://openrouter.ai/keys", hasFree: true, headers: { "X-Title": "X Chat" } },
@@ -1121,7 +1120,6 @@
 
   /* ============================================================ PROVIDERS */
   async function dataUrlToBlob(dataUrl) { const r = await fetch(dataUrl); return await r.blob(); }
-  function dataUrlBase64(dataUrl) { const i = dataUrl.indexOf(","); return i >= 0 ? dataUrl.slice(i + 1) : dataUrl; }
   const imgAtts = (m) => (m.attachments || []).filter(a => a.type === "image");
   const audAtts = (m) => (m.attachments || []).filter(a => a.type === "audio");
   const docAtts = (m) => (m.attachments || []).filter(a => a.type === "doc");
@@ -1218,7 +1216,7 @@
   function olMsg(m) {
     const msg = { role: m.role, content: msgText(m) };
     const imgs = imgAtts(m);
-    if (imgs.length) msg.images = imgs.map(a => dataUrlBase64(a.dataUrl));
+    if (imgs.length) msg.images = imgs.map(a => a.dataUrl.slice(a.dataUrl.indexOf(",") + 1));
     return msg;
   }
   async function streamOllama(history, userMsg, onToken, signal, opts) {
@@ -1812,14 +1810,12 @@
   els.btnMic.addEventListener("click", toggleMic);
 
   /* ============================================================ WRITING TOOLS (Proofreader / Rewriter / Writer / Summarizer) */
-  const toolAPI = { proofread: "Proofreader", formal: "Rewriter", casual: "Rewriter", shorter: "Rewriter", longer: "Rewriter", expand: "Writer", summarize: "Summarizer" };
   let toolBusy = false;
 
-  function toolsAvailable() { return ["Proofreader", "Rewriter", "Writer", "Summarizer", "Translator"].some(n => n in self); }
   function gateTools() {
     els.toolsMainView.querySelectorAll(".item").forEach(b => {
-      const t = b.dataset.tool;
-      b.disabled = (t === "translate") ? !("Translator" in self) : !(toolAPI[t] in self);
+      const t = b.dataset.tool, api = toolFns[t] && toolFns[t].api;
+      b.disabled = (t === "translate") ? !("Translator" in self) : !(api && api in self);
     });
   }
   function openTools() { gateTools(); showToolsMain(); els.toolsMenu.classList.add("open"); }
@@ -1883,19 +1879,19 @@
   }
 
   const toolFns = {
-    proofread: { fn: toolProofread, label: "Proofreading", draft: true },
-    formal: { fn: () => toolRewrite("formal"), label: "Rewriting", draft: true },
-    casual: { fn: () => toolRewrite("casual"), label: "Rewriting", draft: true },
-    shorter: { fn: () => toolRewrite("shorter"), label: "Rewriting", draft: true },
-    longer: { fn: () => toolRewrite("longer"), label: "Rewriting", draft: true },
-    expand: { fn: toolExpand, label: "Writing", draft: true },
-    summarize: { fn: toolSummarize, label: "Summarizing", draft: false },
+    proofread: { api: "Proofreader", fn: toolProofread, label: "Proofreading", draft: true },
+    formal: { api: "Rewriter", fn: () => toolRewrite("formal"), label: "Rewriting", draft: true },
+    casual: { api: "Rewriter", fn: () => toolRewrite("casual"), label: "Rewriting", draft: true },
+    shorter: { api: "Rewriter", fn: () => toolRewrite("shorter"), label: "Rewriting", draft: true },
+    longer: { api: "Rewriter", fn: () => toolRewrite("longer"), label: "Rewriting", draft: true },
+    expand: { api: "Writer", fn: toolExpand, label: "Writing", draft: true },
+    summarize: { api: "Summarizer", fn: toolSummarize, label: "Summarizing", draft: false },
   };
   async function runTool(key) {
     const t = toolFns[key]; if (!t) return;
     if (toolBusy || generating) return;
     closeTools();
-    if (!(toolAPI[key] in self)) { toast(toolAPI[key] + " API isn't available in this browser", false); return; }
+    if (!(t.api in self)) { toast(t.api + " API isn't available in this browser", false); return; }
     if (t.draft && !els.input.value.trim()) { toast("Type a draft first, then use this tool", false); return; }
     toolBusy = true; els.btnTools.classList.add("active"); setStatus("busy", t.label + "…");
     try { await t.fn(); }
@@ -2178,7 +2174,6 @@
 
   /* ============================================================ COMPARE MODELS */
   let cmpControllers = [], cmpRunning = false, cmpResults = { A: null, B: null }, cmpLastPrompt = "";
-  function cmpProvName(p) { return p === "local" ? "On-device AI" : p === "ollama" ? "Ollama" : (CLOUD[p] ? CLOUD[p].name : p); }
   function cmpProviderOptions() {
     const opts = [];
     if (localAvail !== "unavailable") opts.push({ v: "local", t: "On-device AI" });
@@ -2228,7 +2223,7 @@
       const msg = (e && e.name === "AbortError") ? "_⏹ Stopped._" : "⚠️ **" + escapeHtml(e && e.message ? e.message : String(e)) + "**";
       bodyEl.innerHTML = renderMarkdown((acc ? acc + "\n\n" : "") + msg);
     }
-    cmpResults[slot] = { provider, model, providerName: cmpProvName(provider), text: acc, secs: ((Date.now() - t0) / 1000).toFixed(1) };
+    cmpResults[slot] = { provider, model, providerName: provider === "local" ? "On-device AI" : provider === "ollama" ? "Ollama" : (CLOUD[provider] ? CLOUD[provider].name : provider), text: acc, secs: ((Date.now() - t0) / 1000).toFixed(1) };
   }
   async function cmpRun() {
     if (cmpRunning) { cmpStop(); return; }
@@ -2365,7 +2360,7 @@
     buildLangUI();
     buildCloudProviderSelect();
     renderPersonaBar();
-    if (!toolsAvailable()) els.btnTools.style.display = "none"; else gateTools();
+    if (!["Proofreader", "Rewriter", "Writer", "Summarizer", "Translator"].some(n => n in self)) els.btnTools.style.display = "none"; else gateTools();
     els.orFree.checked = !!settings.freeOnly;
 
     await loadConversations();
